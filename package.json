@@ -1,0 +1,19 @@
+{
+  "name": "angularci",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Alejandro RV",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.19.2",
+    "colors": "^1.4.0",
+    "moment": "^2.27.0",
+    "node-7z": "^2.1.1",
+    "nodemon": "^2.0.4"
+  }
+}
