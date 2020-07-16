@@ -1,15 +1,12 @@
-var fs = require("fs");
+import { existsSync } from "fs";
 
-const log = require("./log");
-const zip = require("./zip");
-const {
-  ngPath,
-  distPath
-} = require("./config");
+import { log } from "./log";
+import { ngZip as zip } from "./zip";
+import { ngPath, distPath } from "./config";
 
 function initProcess() {
-  if (fs.existsSync(ngPath)) {
-    log("Comenzando proceso 7zip... ", "info");
+  if (existsSync(ngPath)) {
+    log("Comenzando proceso 7zip.... ", "info");
     log(`Path: ${ngPath}`, "minor");
     zipProcess();
   } else {

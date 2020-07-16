@@ -1,15 +1,10 @@
 var seven = require("node-7z");
 
-const {
-  ngPath,
-  name
-} = require("./config");
+import { ngPath, name } from "./config";
 
-function ngZip() {
+export function ngZip() {
   const myStream = seven.add(name, ngPath + "/*", {
     recursive: true,
   });
   return myStream;
 }
-
-module.exports = ngZip;
