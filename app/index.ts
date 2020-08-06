@@ -1,8 +1,12 @@
 import { existsSync } from "fs";
+
 import { ngPath } from "./config";
 import { log } from "./log";
 import { ngBuild } from "./ng-build";
 import { ngZip } from "./zip";
+import { upload, filesystems, refresh } from "./requests";
+
+let id: string;
 
 async function initProcess() {
   const build = await buildProcess();
@@ -16,7 +20,8 @@ async function initProcess() {
   if (!zip) {
     return;
   }
-  uploadProcess();
+  const upload = await uploadProcess();
+  !!upload ? process.exit(0) : process.exit(1);
 }
 
 function buildProcess(): Promise<boolean> {
@@ -30,8 +35,17 @@ function zipProcess(): Promise<boolean> {
   return ngZip();
 }
 
-function uploadProcess() {
-  log("Comensando proceso upload de archivos... ", "info");
+async function uploadProcess(): Promise<boolean> {
+  log("Comenzando proceso upload de zip... ", "info");
+  const uploadRes = await upload();
+  let filesystemsR: boolean;
+  let refreshR: boolean;
+  if (!!!uploadRes) {
+    return false;
+  }
+  filesystemsR = await filesystems(uploadRes);
+  refreshR = await refresh();
+  return !!filesystemsR || !!refreshR ? true : false;
 }
 
 initProcess();
