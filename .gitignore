@@ -30,3 +30,7 @@ testem.log
 # System Files
 .DS_Store
 Thumbs.db
+
+# outputs
+/log
+/banorte-versiones
