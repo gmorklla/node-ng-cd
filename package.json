@@ -14,17 +14,28 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^0.19.2",
+    "chalk": "^4.1.0",
+    "clear": "^0.1.0",
+    "clui": "^0.3.6",
     "colors": "^1.4.0",
+    "configstore": "^5.0.1",
+    "figlet": "^1.5.0",
     "form-data": "^3.0.0",
+    "inquirer": "^7.3.3",
     "moment": "^2.27.0",
     "node-7z": "^2.1.1",
     "nodemon": "^2.0.4",
-    "typescript": "^3.9.6"
+    "typescript": "^3.9.6",
+    "yargs": "^15.4.1"
   },
   "devDependencies": {
     "@types/axios": "^0.14.0",
+    "@types/chalk": "^2.2.0",
+    "@types/configstore": "^4.0.0",
+    "@types/figlet": "^1.2.0",
     "@types/node": "^14.0.23",
     "@types/node-7z": "^0.4.2",
+    "@types/yargs": "^15.0.5",
     "ts-node-dev": "^1.0.0-pre.51"
   }
 }

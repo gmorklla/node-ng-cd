@@ -1,21 +1,20 @@
-var seven = require("node-7z");
+var seven = require('node-7z');
 
-import { ngPath, distPath } from "./config";
-import { log } from "./log";
+import { log } from './log';
 
-export function ngZip(): Promise<boolean> {
+export function ngZip(appPath: string, zipPath: string): Promise<boolean> {
   return new Promise((resolve, reject) => {
-    const name = "./banorte-versiones/v2.zip";
-    const myStream = seven.add(name, ngPath + "/*", {
+    const name = `${zipPath}\\v2.zip`;
+    const app = `${appPath}\\dist\\banorte`;
+    const myStream = seven.add(name, app + '/*', {
       recursive: true,
     });
-    myStream.on("end", function () {
-      log("Proceso 7zip completado ", "success");
-      log(`Path: ${distPath}`, "minor");
+    myStream.on('end', function () {
+      log('Proceso 7zip completado ', 'success');
       resolve(true);
     });
-    myStream.on("error", () => {
-      log("Error en proceso 7zip ", "error");
+    myStream.on('error', () => {
+      log('Error en proceso 7zip ', 'error');
       reject(false);
     });
   });
