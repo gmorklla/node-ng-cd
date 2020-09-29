@@ -3,9 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ngZip = void 0;
 var seven = require('node-7z');
 var log_1 = require("./log");
-function ngZip(appPath, zipPath) {
+function ngZip(appPath, zipPath, version) {
     return new Promise(function (resolve, reject) {
-        var name = zipPath + "\\v2.zip";
+        var name = zipPath + "\\" + version + ".zip";
         var app = appPath + "\\dist\\banorte";
         var myStream = seven.add(name, app + '/*', {
             recursive: true,

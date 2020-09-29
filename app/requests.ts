@@ -1,17 +1,17 @@
-import { createReadStream } from "fs";
-import { join } from "path";
-import axios, { AxiosResponse, AxiosError } from "axios";
-import FormData from "form-data";
+import { createReadStream } from 'fs';
+import { join } from 'path';
+import axios, { AxiosResponse, AxiosError } from 'axios';
+import FormData from 'form-data';
 
-import { distPath } from "./config";
-import { log } from "./log";
-import { writeLog } from "./log-file";
+import { distPath } from './config';
+import { log } from './log';
+import { writeLog } from './log-file';
 
-export function upload(): Promise<string> {
-  const filePath = join(distPath, "v2.zip");
+export function upload(zipPath: string, version: string): Promise<string> {
+  const filePath = join(zipPath, `${version}.zip`);
   const file = createReadStream(filePath);
   const form = new FormData();
-  form.append("file", file);
+  form.append('file', file);
   return new Promise((resolve, reject) => {
     axios
       .post<
@@ -23,7 +23,7 @@ export function upload(): Promise<string> {
           creationDate: number;
         }>
       >(
-        "http://lnxsapl1d.dev.unix.banorte.com:9080/wconfig-services/version/uploadZip/editor/version/2",
+        'http://lnxsapl1d.dev.unix.banorte.com:9080/wconfig-services/version/uploadZip/editor/version/2',
         form,
         {
           headers: form.getHeaders(),
@@ -32,13 +32,13 @@ export function upload(): Promise<string> {
       )
       .then((val) => {
         const id = val.data.id;
-        writeLog("uploadZip-success", id);
-        log("Proceso upload de zip completado ", "success");
+        writeLog('uploadZip-success', id);
+        log('Proceso upload de zip completado ', 'success');
         resolve(id);
       })
       .catch((err: AxiosError) => {
-        writeLog("uploadZip-error", err.response?.data);
-        log("Error en proceso uploadZip ", "error");
+        writeLog('uploadZip-error', err.response?.data);
+        log('Error en proceso uploadZip ', 'error');
         reject(null);
       });
   });
@@ -51,12 +51,12 @@ export function filesystems(id: string): Promise<boolean> {
         `http://lnxsapl1d.dev.unix.banorte.com:9080/uf-ui-editor/load/${id}/v/2`
       )
       .then((_) => {
-        log("Proceso filesystems completado ", "success");
+        log('Proceso filesystems completado ', 'success');
         resolve(true);
       })
       .catch((err: AxiosError) => {
-        writeLog("filesystems-error", err.response?.data);
-        log("Error en proceso filesystems ", "error");
+        writeLog('filesystems-error', err.response?.data);
+        log('Error en proceso filesystems ', 'error');
         reject(false);
       });
   });
@@ -67,12 +67,12 @@ export function refresh(): Promise<boolean> {
     axios
       .get(`http://lnxsapl1d.dev.unix.banorte.com:9080/uf-ui-editor/refreshall`)
       .then((_) => {
-        log("Proceso refresh completado ", "success");
+        log('Proceso refresh completado ', 'success');
         resolve(true);
       })
       .catch((err: AxiosError) => {
-        writeLog("refresh-error", err.response?.data);
-        log("Error en proceso refresh ", "error");
+        writeLog('refresh-error', err.response?.data);
+        log('Error en proceso refresh ', 'error');
         reject(false);
       });
   });

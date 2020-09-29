@@ -43,7 +43,7 @@ var figlet = require('figlet');
 var Configstore = require('configstore');
 var pkg = require('../package.json');
 var config = new Configstore(pkg.name);
-var _a = config.all, appPath = _a.appPath, zipPath = _a.zipPath;
+var _a = config.all, appPath = _a.appPath, zipPath = _a.zipPath, version = _a.version;
 var log_1 = require("./log");
 var ng_build_1 = require("./ng-build");
 var zip_1 = require("./zip");
@@ -52,7 +52,7 @@ var files_1 = require("./files");
 var inquirer_1 = require("./inquirer");
 function initProcess() {
     return __awaiter(this, void 0, void 0, function () {
-        var paths, valid, paths, _a, validAppPath, validZipPath, build, zip;
+        var paths, valid, paths, _a, validAppPath, validZipPath, build, zip, upload;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
@@ -109,9 +109,10 @@ function initProcess() {
                         log_1.log("Saliendo de aplicaci\u00F3n por error ", 'error');
                         process.exit(0);
                     }
-                    // const upload = await uploadProcess();
-                    // !!upload ? process.exit(0) : process.exit(1);
-                    process.exit(0);
+                    return [4 /*yield*/, uploadProcess()];
+                case 8:
+                    upload = _b.sent();
+                    !!upload ? process.exit(0) : process.exit(1);
                     return [2 /*return*/];
             }
         });
@@ -122,6 +123,24 @@ function setPaths(paths) {
     config.set('zipPath', paths.zip);
     appPath = paths.app;
     zipPath = paths.zip;
+}
+function setVersion() {
+    var date = new Date();
+    var dateF = date
+        .toLocaleDateString('es-MX', {
+        month: '2-digit',
+        day: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    })
+        .replace(/\//g, '')
+        .replace(/-/g, '')
+        .replace(' ', '-')
+        .replace(':', '');
+    var versionI = "v2-" + dateF;
+    config.set('version', versionI);
+    version = versionI;
 }
 function verifyPaths() {
     return {
@@ -139,7 +158,9 @@ function buildProcess() {
 }
 function zipProcess() {
     log_1.log('Comenzando proceso 7zip.... ', 'info');
-    return zip_1.ngZip(appPath, zipPath);
+    setVersion();
+    log_1.log("Version: " + version + " ", 'minor');
+    return zip_1.ngZip(appPath, zipPath, version);
 }
 function uploadProcess() {
     return __awaiter(this, void 0, void 0, function () {
@@ -148,7 +169,7 @@ function uploadProcess() {
             switch (_a.label) {
                 case 0:
                     log_1.log('Comenzando proceso upload de zip... ', 'info');
-                    return [4 /*yield*/, requests_1.upload()];
+                    return [4 /*yield*/, requests_1.upload(zipPath, version)];
                 case 1:
                     uploadRes = _a.sent();
                     if (!!!uploadRes) {

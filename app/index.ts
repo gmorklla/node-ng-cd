@@ -7,7 +7,7 @@ const Configstore = require('configstore');
 const pkg = require('../package.json');
 
 const config = new Configstore(pkg.name);
-let { appPath, zipPath } = config.all;
+let { appPath, zipPath, version } = config.all;
 
 import { log } from './log';
 import { ngBuild } from './ng-build';
@@ -66,9 +66,8 @@ async function initProcess() {
     log(`Saliendo de aplicación por error `, 'error');
     process.exit(0);
   }
-  // const upload = await uploadProcess();
-  // !!upload ? process.exit(0) : process.exit(1);
-  process.exit(0);
+  const upload = await uploadProcess();
+  !!upload ? process.exit(0) : process.exit(1);
 }
 
 function setPaths(paths: PathsI): void {
@@ -76,6 +75,25 @@ function setPaths(paths: PathsI): void {
   config.set('zipPath', paths.zip);
   appPath = paths.app;
   zipPath = paths.zip;
+}
+
+function setVersion(): void {
+  const date = new Date();
+  const dateF = date
+    .toLocaleDateString('es-MX', {
+      month: '2-digit',
+      day: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+    .replace(/\//g, '')
+    .replace(/-/g, '')
+    .replace(' ', '-')
+    .replace(':', '');
+  const versionI = `v2-${dateF}`;
+  config.set('version', versionI);
+  version = versionI;
 }
 
 function verifyPaths(): { validAppPath: boolean; validZipPath: boolean } {
@@ -97,12 +115,14 @@ function buildProcess(): Promise<boolean> {
 
 function zipProcess(): Promise<boolean> {
   log('Comenzando proceso 7zip.... ', 'info');
-  return ngZip(appPath, zipPath);
+  setVersion();
+  log(`Version: ${version} `, 'minor');
+  return ngZip(appPath, zipPath, version);
 }
 
 async function uploadProcess(): Promise<boolean> {
   log('Comenzando proceso upload de zip... ', 'info');
-  const uploadRes = await upload();
+  const uploadRes = await upload(zipPath, version);
   let filesystemsR: boolean;
   let refreshR: boolean;
   if (!!!uploadRes) {

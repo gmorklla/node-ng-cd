@@ -2,9 +2,13 @@ var seven = require('node-7z');
 
 import { log } from './log';
 
-export function ngZip(appPath: string, zipPath: string): Promise<boolean> {
+export function ngZip(
+  appPath: string,
+  zipPath: string,
+  version: string
+): Promise<boolean> {
   return new Promise((resolve, reject) => {
-    const name = `${zipPath}\\v2.zip`;
+    const name = `${zipPath}\\${version}.zip`;
     const app = `${appPath}\\dist\\banorte`;
     const myStream = seven.add(name, app + '/*', {
       recursive: true,
