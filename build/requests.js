@@ -5,19 +5,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.refresh = exports.filesystems = exports.upload = void 0;
 var fs_1 = require("fs");
-var path_1 = require("path");
 var axios_1 = __importDefault(require("axios"));
 var form_data_1 = __importDefault(require("form-data"));
 var log_1 = require("./log");
 var log_file_1 = require("./log-file");
-function upload(zipPath, version) {
-    var filePath = path_1.join(zipPath, version + ".zip");
+var dev = 'http://lnxsapl1d.dev.unix.banorte.com:9080';
+var int = 'https://lnxsapl1i.qa.unix.banorte.com:9443';
+function upload(filePath, env) {
     var file = fs_1.createReadStream(filePath);
+    var server = env === 'dev' ? dev : int;
     var form = new form_data_1.default();
     form.append('file', file);
     return new Promise(function (resolve, reject) {
         axios_1.default
-            .post('http://lnxsapl1d.dev.unix.banorte.com:9080/wconfig-services/version/uploadZip/editor/version/2', form, {
+            .post(server + "/wconfig-services/version/uploadZip/editor/version/2", form, {
             headers: form.getHeaders(),
             maxContentLength: Infinity,
         })
@@ -36,10 +37,11 @@ function upload(zipPath, version) {
     });
 }
 exports.upload = upload;
-function filesystems(id) {
+function filesystems(id, env) {
+    var server = env === 'dev' ? dev : int;
     return new Promise(function (resolve, reject) {
         axios_1.default
-            .get("http://lnxsapl1d.dev.unix.banorte.com:9080/uf-ui-editor/load/" + id + "/v/2")
+            .get(server + "/uf-ui-editor/load/" + id + "/v/2")
             .then(function (_) {
             log_1.log('Proceso filesystems completado ', 'success');
             resolve(true);
@@ -53,10 +55,11 @@ function filesystems(id) {
     });
 }
 exports.filesystems = filesystems;
-function refresh() {
+function refresh(env) {
+    var server = env === 'dev' ? dev : int;
     return new Promise(function (resolve, reject) {
         axios_1.default
-            .get("http://lnxsapl1d.dev.unix.banorte.com:9080/uf-ui-editor/refreshall")
+            .get(server + "/uf-ui-editor/refreshall")
             .then(function (_) {
             log_1.log('Proceso refresh completado ', 'success');
             resolve(true);

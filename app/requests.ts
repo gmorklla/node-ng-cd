@@ -3,13 +3,15 @@ import { join } from 'path';
 import axios, { AxiosResponse, AxiosError } from 'axios';
 import FormData from 'form-data';
 
-import { distPath } from './config';
 import { log } from './log';
 import { writeLog } from './log-file';
 
-export function upload(zipPath: string, version: string): Promise<string> {
-  const filePath = join(zipPath, `${version}.zip`);
+const dev = 'http://lnxsapl1d.dev.unix.banorte.com:9080';
+const int = 'https://lnxsapl1i.qa.unix.banorte.com:9443';
+
+export function upload(filePath: string, env: string): Promise<string> {
   const file = createReadStream(filePath);
+  const server = env === 'dev' ? dev : int;
   const form = new FormData();
   form.append('file', file);
   return new Promise((resolve, reject) => {
@@ -22,14 +24,10 @@ export function upload(zipPath: string, version: string): Promise<string> {
           version: number;
           creationDate: number;
         }>
-      >(
-        'http://lnxsapl1d.dev.unix.banorte.com:9080/wconfig-services/version/uploadZip/editor/version/2',
-        form,
-        {
-          headers: form.getHeaders(),
-          maxContentLength: Infinity,
-        }
-      )
+      >(`${server}/wconfig-services/version/uploadZip/editor/version/2`, form, {
+        headers: form.getHeaders(),
+        maxContentLength: Infinity,
+      })
       .then((val) => {
         const id = val.data.id;
         writeLog('uploadZip-success', id);
@@ -44,12 +42,11 @@ export function upload(zipPath: string, version: string): Promise<string> {
   });
 }
 
-export function filesystems(id: string): Promise<boolean> {
+export function filesystems(id: string, env: string): Promise<boolean> {
+  const server = env === 'dev' ? dev : int;
   return new Promise((resolve, reject) => {
     axios
-      .get(
-        `http://lnxsapl1d.dev.unix.banorte.com:9080/uf-ui-editor/load/${id}/v/2`
-      )
+      .get(`${server}/uf-ui-editor/load/${id}/v/2`)
       .then((_) => {
         log('Proceso filesystems completado ', 'success');
         resolve(true);
@@ -62,10 +59,11 @@ export function filesystems(id: string): Promise<boolean> {
   });
 }
 
-export function refresh(): Promise<boolean> {
+export function refresh(env: string): Promise<boolean> {
+  const server = env === 'dev' ? dev : int;
   return new Promise((resolve, reject) => {
     axios
-      .get(`http://lnxsapl1d.dev.unix.banorte.com:9080/uf-ui-editor/refreshall`)
+      .get(`${server}/uf-ui-editor/refreshall`)
       .then((_) => {
         log('Proceso refresh completado ', 'success');
         resolve(true);

@@ -36,48 +36,45 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var argv = require('yargs').argv;
+var path_1 = require("path");
 var clear = require('clear');
 var chalk = require('chalk');
 var figlet = require('figlet');
-var Configstore = require('configstore');
-var pkg = require('../package.json');
-var config = new Configstore(pkg.name);
-var _a = config.all, appPath = _a.appPath, zipPath = _a.zipPath, version = _a.version;
 var log_1 = require("./log");
 var ng_build_1 = require("./ng-build");
 var zip_1 = require("./zip");
 var requests_1 = require("./requests");
 var files_1 = require("./files");
 var inquirer_1 = require("./inquirer");
+var utilities_1 = require("./utilities");
 function initProcess() {
     return __awaiter(this, void 0, void 0, function () {
-        var paths, valid, paths, _a, validAppPath, validZipPath, build, zip, upload;
+        var paths, valid, paths, _a, validAppPath, validZipPath, cmd, build, zip, versionToUpload, upload_1;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
                     clear();
                     console.log(chalk.yellow(figlet.textSync('CI/CD', { horizontalLayout: 'full' })));
-                    if (!(!appPath || !zipPath)) return [3 /*break*/, 2];
+                    if (!(!utilities_1.appPath || !utilities_1.zipPath)) return [3 /*break*/, 2];
                     return [4 /*yield*/, inquirer_1.getPaths()];
                 case 1:
                     paths = _b.sent();
-                    setPaths(paths);
+                    utilities_1.setPaths(paths);
                     _b.label = 2;
                 case 2:
-                    logPaths();
-                    return [4 /*yield*/, inquirer_1.validateCurrentPaths('Son correctos los paths (s/n):', 'Por favor, indica si es correcto con una "s" o incorrecto con una "n".')];
+                    utilities_1.logPaths();
+                    return [4 /*yield*/, inquirer_1.validateCurrentPaths()];
                 case 3:
                     valid = (_b.sent()).valid;
-                    if (!(valid === 'n')) return [3 /*break*/, 5];
+                    if (!!valid) return [3 /*break*/, 5];
                     return [4 /*yield*/, inquirer_1.getPaths()];
                 case 4:
                     paths = _b.sent();
-                    setPaths(paths);
-                    logPaths();
+                    utilities_1.setPaths(paths);
+                    utilities_1.logPaths();
                     _b.label = 5;
                 case 5:
-                    _a = verifyPaths(), validAppPath = _a.validAppPath, validZipPath = _a.validZipPath;
+                    _a = utilities_1.verifyPaths(), validAppPath = _a.validAppPath, validZipPath = _a.validZipPath;
                     if (!validAppPath || !validZipPath) {
                         if (!validAppPath) {
                             log_1.log("App path inv\u00E1lido ", 'error');
@@ -88,100 +85,126 @@ function initProcess() {
                         log_1.log("Saliendo de aplicaci\u00F3n por error ", 'error');
                         process.exit(0);
                     }
-                    return [4 /*yield*/, buildProcess()];
+                    return [4 /*yield*/, inquirer_1.processToExec()];
                 case 6:
-                    build = _b.sent();
-                    if (!build) {
-                        log_1.log("Saliendo de aplicaci\u00F3n por error ", 'error');
-                        process.exit(0);
-                    }
-                    else if (!files_1.directoryExists(appPath + "\\dist\\banorte")) {
-                        log_1.log('No se encontró la carpeta con la aplicación compilada ', 'error');
-                        log_1.log("Saliendo de aplicaci\u00F3n por error ", 'error');
-                        process.exit(0);
-                    }
-                    return [4 /*yield*/, zipProcess()
-                            .then()
-                            .catch(function (err) { return console.log(err); })];
+                    cmd = (_b.sent()).cmd;
+                    if (!(cmd === 'Build' || cmd === 'Todos')) return [3 /*break*/, 8];
+                    return [4 /*yield*/, buildProcess()];
                 case 7:
-                    zip = _b.sent();
-                    if (!zip) {
-                        log_1.log("Saliendo de aplicaci\u00F3n por error ", 'error');
-                        process.exit(0);
-                    }
-                    return [4 /*yield*/, uploadProcess()];
+                    build = _b.sent();
+                    _b.label = 8;
                 case 8:
-                    upload = _b.sent();
-                    !!upload ? process.exit(0) : process.exit(1);
+                    if (!(cmd === 'Zip' || cmd === 'Todos')) return [3 /*break*/, 10];
+                    return [4 /*yield*/, zipProcess()];
+                case 9:
+                    zip = _b.sent();
+                    _b.label = 10;
+                case 10:
+                    if (!(cmd === 'Upload' || cmd === 'Todos')) return [3 /*break*/, 14];
+                    versionToUpload = null;
+                    if (!(cmd === 'Upload')) return [3 /*break*/, 12];
+                    return [4 /*yield*/, utilities_1.getVersionToUpload()];
+                case 11:
+                    versionToUpload = _b.sent();
+                    _b.label = 12;
+                case 12: return [4 /*yield*/, uploadProcess(versionToUpload)];
+                case 13:
+                    upload_1 = _b.sent();
+                    _b.label = 14;
+                case 14:
+                    process.exit(0);
                     return [2 /*return*/];
             }
         });
     });
 }
-function setPaths(paths) {
-    config.set('appPath', paths.app);
-    config.set('zipPath', paths.zip);
-    appPath = paths.app;
-    zipPath = paths.zip;
-}
-function setVersion() {
-    var date = new Date();
-    var dateF = date
-        .toLocaleDateString('es-MX', {
-        month: '2-digit',
-        day: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-    })
-        .replace(/\//g, '')
-        .replace(/-/g, '')
-        .replace(' ', '-')
-        .replace(':', '');
-    var versionI = "v2-" + dateF;
-    config.set('version', versionI);
-    version = versionI;
-}
-function verifyPaths() {
-    return {
-        validAppPath: files_1.directoryExists(appPath),
-        validZipPath: files_1.directoryExists(zipPath),
-    };
-}
-function logPaths() {
-    log_1.log("App path: " + appPath + " ", 'minor');
-    log_1.log("Zip path: " + zipPath + " ", 'minor');
-}
+// Proceso build
 function buildProcess() {
-    log_1.log('Comenzando proceso ng build.... ', 'info');
-    return ng_build_1.ngBuild(appPath);
-}
-function zipProcess() {
-    log_1.log('Comenzando proceso 7zip.... ', 'info');
-    setVersion();
-    log_1.log("Version: " + version + " ", 'minor');
-    return zip_1.ngZip(appPath, zipPath, version);
-}
-function uploadProcess() {
     return __awaiter(this, void 0, void 0, function () {
-        var uploadRes, filesystemsR, refreshR;
+        var build;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    log_1.log('Comenzando proceso upload de zip... ', 'info');
-                    return [4 /*yield*/, requests_1.upload(zipPath, version)];
+                    log_1.log('Comenzando proceso ng build.... ', 'info');
+                    return [4 /*yield*/, ng_build_1.ngBuild(utilities_1.appPath)];
                 case 1:
+                    build = _a.sent();
+                    if (!build) {
+                        log_1.log("Saliendo de aplicaci\u00F3n por error en build process ", 'error');
+                        process.exit(0);
+                    }
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+// Proceso zip
+function zipProcess() {
+    return __awaiter(this, void 0, void 0, function () {
+        var zip;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    // Comprobar que exista carpeta dist\banorte
+                    if (!files_1.directoryExists(utilities_1.appPath + "\\dist\\banorte")) {
+                        log_1.log('No se encontró la carpeta con la aplicación compilada ', 'error');
+                        log_1.log("Saliendo de aplicaci\u00F3n por error en zip process ", 'error');
+                        process.exit(0);
+                    }
+                    log_1.log('Comenzando proceso 7zip.... ', 'info');
+                    utilities_1.setVersion();
+                    log_1.log("Version: " + utilities_1.version + " ", 'minor');
+                    return [4 /*yield*/, zip_1.ngZip(utilities_1.appPath, utilities_1.zipPath, utilities_1.version)];
+                case 1:
+                    zip = _a.sent();
+                    if (!zip) {
+                        log_1.log("Saliendo de aplicaci\u00F3n por error en zip process ", 'error');
+                        process.exit(0);
+                    }
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+// Proceso upload
+function uploadProcess(savedVersion) {
+    if (savedVersion === void 0) { savedVersion = null; }
+    return __awaiter(this, void 0, void 0, function () {
+        var env, filePath, validPath, uploadRes, filesystemsR, refreshR;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    log_1.log('Comenzando proceso upload de aplicación... ', 'info');
+                    return [4 /*yield*/, inquirer_1.getEnvironment()];
+                case 1:
+                    env = (_a.sent()).env;
+                    filePath = !!savedVersion
+                        ? path_1.join(utilities_1.zipPath, "" + savedVersion)
+                        : path_1.join(utilities_1.zipPath, utilities_1.version + ".zip");
+                    validPath = utilities_1.verifyVersion(filePath);
+                    if (!validPath) {
+                        log_1.log("No se encontr\u00F3 el archivo especificado " + savedVersion + ".zip ", 'error');
+                        log_1.log("Saliendo de aplicaci\u00F3n por error en upload process ", 'error');
+                        process.exit(0);
+                    }
+                    return [4 /*yield*/, requests_1.upload(filePath, env)];
+                case 2:
                     uploadRes = _a.sent();
                     if (!!!uploadRes) {
-                        return [2 /*return*/, false];
+                        log_1.log("Saliendo de aplicaci\u00F3n por error en upload process ", 'error');
+                        process.exit(0);
                     }
-                    return [4 /*yield*/, requests_1.filesystems(uploadRes)];
-                case 2:
-                    filesystemsR = _a.sent();
-                    return [4 /*yield*/, requests_1.refresh()];
+                    return [4 /*yield*/, requests_1.filesystems(uploadRes, env)];
                 case 3:
+                    filesystemsR = _a.sent();
+                    return [4 /*yield*/, requests_1.refresh(env)];
+                case 4:
                     refreshR = _a.sent();
-                    return [2 /*return*/, !!filesystemsR || !!refreshR ? true : false];
+                    if (!filesystemsR || !refreshR) {
+                        log_1.log("Saliendo de aplicaci\u00F3n por error en upload process ", 'error');
+                        process.exit(0);
+                    }
+                    return [2 /*return*/];
             }
         });
     });

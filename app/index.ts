@@ -1,20 +1,30 @@
-import { PathsI } from './models/paths.model';
-const { argv } = require('yargs');
+import { join } from 'path';
 const clear = require('clear');
 const chalk = require('chalk');
 const figlet = require('figlet');
-const Configstore = require('configstore');
-const pkg = require('../package.json');
-
-const config = new Configstore(pkg.name);
-let { appPath, zipPath, version } = config.all;
 
 import { log } from './log';
 import { ngBuild } from './ng-build';
 import { ngZip } from './zip';
 import { upload, filesystems, refresh } from './requests';
 import { directoryExists } from './files';
-import { getPaths, validateCurrentPaths } from './inquirer';
+import {
+  getPaths,
+  validateCurrentPaths,
+  getEnvironment,
+  processToExec,
+} from './inquirer';
+import {
+  appPath,
+  zipPath,
+  version,
+  setPaths,
+  setVersion,
+  verifyPaths,
+  verifyVersion,
+  logPaths,
+  getVersionToUpload,
+} from './utilities';
 
 async function initProcess() {
   clear();
@@ -28,12 +38,9 @@ async function initProcess() {
   }
   logPaths();
   // Si están definidos los paths se pregunta si son correctos
-  const { valid } = await validateCurrentPaths(
-    'Son correctos los paths (s/n):',
-    'Por favor, indica si es correcto con una "s" o incorrecto con una "n".'
-  );
+  const { valid } = await validateCurrentPaths();
   // Si no son correctos se obtienen
-  if (valid === 'n') {
+  if (!valid) {
     const paths = await getPaths();
     setPaths(paths);
     logPaths();
@@ -50,87 +57,82 @@ async function initProcess() {
     log(`Saliendo de aplicación por error `, 'error');
     process.exit(0);
   }
-  const build = await buildProcess();
-  if (!build) {
-    log(`Saliendo de aplicación por error `, 'error');
-    process.exit(0);
-  } else if (!directoryExists(`${appPath}\\dist\\banorte`)) {
-    log('No se encontró la carpeta con la aplicación compilada ', 'error');
-    log(`Saliendo de aplicación por error `, 'error');
-    process.exit(0);
+  // Elige qué proceso(s) ejecutar
+  const { cmd } = await processToExec();
+  // Proceso build
+  if (cmd === 'Build' || cmd === 'Todos') {
+    const build = await buildProcess();
   }
-  const zip = await zipProcess()
-    .then()
-    .catch((err) => console.log(err));
-  if (!zip) {
-    log(`Saliendo de aplicación por error `, 'error');
-    process.exit(0);
+  // Proceso zip
+  if (cmd === 'Zip' || cmd === 'Todos') {
+    const zip = await zipProcess();
   }
-  const upload = await uploadProcess();
-  !!upload ? process.exit(0) : process.exit(1);
+  // Proceso upload
+  if (cmd === 'Upload' || cmd === 'Todos') {
+    let versionToUpload: string | null = null;
+    if (cmd === 'Upload') {
+      versionToUpload = await getVersionToUpload();
+    }
+    const upload = await uploadProcess(versionToUpload);
+  }
+  process.exit(0);
 }
 
-function setPaths(paths: PathsI): void {
-  config.set('appPath', paths.app);
-  config.set('zipPath', paths.zip);
-  appPath = paths.app;
-  zipPath = paths.zip;
-}
-
-function setVersion(): void {
-  const date = new Date();
-  const dateF = date
-    .toLocaleDateString('es-MX', {
-      month: '2-digit',
-      day: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-    .replace(/\//g, '')
-    .replace(/-/g, '')
-    .replace(' ', '-')
-    .replace(':', '');
-  const versionI = `v2-${dateF}`;
-  config.set('version', versionI);
-  version = versionI;
-}
-
-function verifyPaths(): { validAppPath: boolean; validZipPath: boolean } {
-  return {
-    validAppPath: directoryExists(appPath),
-    validZipPath: directoryExists(zipPath),
-  };
-}
-
-function logPaths(): void {
-  log(`App path: ${appPath} `, 'minor');
-  log(`Zip path: ${zipPath} `, 'minor');
-}
-
-function buildProcess(): Promise<boolean> {
+// Proceso build
+async function buildProcess(): Promise<void> {
   log('Comenzando proceso ng build.... ', 'info');
-  return ngBuild(appPath);
+  const build = await ngBuild(appPath);
+  if (!build) {
+    log(`Saliendo de aplicación por error en build process `, 'error');
+    process.exit(0);
+  }
 }
-
-function zipProcess(): Promise<boolean> {
+// Proceso zip
+async function zipProcess(): Promise<void> {
+  // Comprobar que exista carpeta dist\banorte
+  if (!directoryExists(`${appPath}\\dist\\banorte`)) {
+    log('No se encontró la carpeta con la aplicación compilada ', 'error');
+    log(`Saliendo de aplicación por error en zip process `, 'error');
+    process.exit(0);
+  }
   log('Comenzando proceso 7zip.... ', 'info');
   setVersion();
   log(`Version: ${version} `, 'minor');
-  return ngZip(appPath, zipPath, version);
+  // Proceso zip
+  const zip = await ngZip(appPath, zipPath, version);
+  if (!zip) {
+    log(`Saliendo de aplicación por error en zip process `, 'error');
+    process.exit(0);
+  }
 }
-
-async function uploadProcess(): Promise<boolean> {
-  log('Comenzando proceso upload de zip... ', 'info');
-  const uploadRes = await upload(zipPath, version);
+// Proceso upload
+async function uploadProcess(
+  savedVersion: string | null = null
+): Promise<void> {
+  log('Comenzando proceso upload de aplicación... ', 'info');
+  const { env } = await getEnvironment();
+  const filePath = !!savedVersion
+    ? join(zipPath, `${savedVersion}`)
+    : join(zipPath, `${version}.zip`);
+  const validPath = verifyVersion(filePath);
+  if (!validPath) {
+    log(`No se encontró el archivo especificado ${savedVersion}.zip `, 'error');
+    log(`Saliendo de aplicación por error en upload process `, 'error');
+    process.exit(0);
+  }
+  const uploadRes = await upload(filePath, env);
   let filesystemsR: boolean;
   let refreshR: boolean;
   if (!!!uploadRes) {
-    return false;
+    log(`Saliendo de aplicación por error en upload process `, 'error');
+    process.exit(0);
   }
-  filesystemsR = await filesystems(uploadRes);
-  refreshR = await refresh();
-  return !!filesystemsR || !!refreshR ? true : false;
+  filesystemsR = await filesystems(uploadRes, env);
+  refreshR = await refresh(env);
+  if (!filesystemsR || !refreshR) {
+    log(`Saliendo de aplicación por error en upload process `, 'error');
+    process.exit(0);
+  }
 }
 
 initProcess();
