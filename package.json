@@ -37,5 +37,10 @@
     "@types/node-7z": "^0.4.2",
     "@types/yargs": "^15.0.5",
     "ts-node-dev": "^1.0.0-pre.51"
+  },
+  "bin": "./build/index.js",
+  "pkg": {
+    "assets": ["node_modules/**/*"],
+    "targets": ["node10-win-x64"]
   }
 }

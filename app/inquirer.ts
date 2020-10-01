@@ -79,3 +79,15 @@ export function versionToUpload(files: string[]): Promise<{ version: string }> {
   ];
   return inquirer.prompt(questions);
 }
+
+export function confirm(msg: string): Promise<{ ok: string }> {
+  const questions = [
+    {
+      name: 'ok',
+      type: 'list',
+      message: msg,
+      choices: ['Ok'],
+    },
+  ];
+  return inquirer.prompt(questions);
+}

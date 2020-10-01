@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.versionToUpload = exports.processToExec = exports.getEnvironment = exports.validateCurrentPaths = exports.getPaths = void 0;
+exports.confirm = exports.versionToUpload = exports.processToExec = exports.getEnvironment = exports.validateCurrentPaths = exports.getPaths = void 0;
 var inquirer = require('inquirer');
 function getPaths() {
     var questions = [
@@ -83,3 +83,15 @@ function versionToUpload(files) {
     return inquirer.prompt(questions);
 }
 exports.versionToUpload = versionToUpload;
+function confirm(msg) {
+    var questions = [
+        {
+            name: 'ok',
+            type: 'list',
+            message: msg,
+            choices: ['Ok'],
+        },
+    ];
+    return inquirer.prompt(questions);
+}
+exports.confirm = confirm;

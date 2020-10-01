@@ -4,7 +4,7 @@ const pkg = require('../package.json');
 import { directoryExists, getFilesFromPath } from './files';
 import { log } from './log';
 import { PathsI } from './models/paths.model';
-import { versionToUpload } from './inquirer';
+import { versionToUpload, confirm } from './inquirer';
 
 const config = new Configstore(pkg.name);
 export let { appPath, zipPath, version } = config.all;
@@ -60,4 +60,11 @@ export async function getVersionToUpload(): Promise<string> {
   const files = getFilesFromPath(zipPath);
   const { version } = await versionToUpload(files);
   return version;
+}
+
+export async function exitApp(msg: string, status: string): Promise<void> {
+  if (status === 'error') {
+    process.exitCode = 1;
+  }
+  await confirm(msg);
 }

@@ -37,7 +37,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getVersionToUpload = exports.logPaths = exports.verifyVersion = exports.verifyPaths = exports.setVersion = exports.setPaths = exports.version = exports.zipPath = exports.appPath = void 0;
+exports.exitApp = exports.getVersionToUpload = exports.logPaths = exports.verifyVersion = exports.verifyPaths = exports.setVersion = exports.setPaths = exports.version = exports.zipPath = exports.appPath = void 0;
 var Configstore = require('configstore');
 var pkg = require('../package.json');
 var files_1 = require("./files");
@@ -105,3 +105,20 @@ function getVersionToUpload() {
     });
 }
 exports.getVersionToUpload = getVersionToUpload;
+function exitApp(msg, status) {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (status === 'error') {
+                        process.exitCode = 1;
+                    }
+                    return [4 /*yield*/, inquirer_1.confirm(msg)];
+                case 1:
+                    _a.sent();
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.exitApp = exitApp;

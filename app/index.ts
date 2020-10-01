@@ -2,6 +2,7 @@ import { join } from 'path';
 const clear = require('clear');
 const chalk = require('chalk');
 const figlet = require('figlet');
+const CLI = require('clui');
 
 import { log } from './log';
 import { ngBuild } from './ng-build';
@@ -24,12 +25,15 @@ import {
   verifyVersion,
   logPaths,
   getVersionToUpload,
+  exitApp,
 } from './utilities';
+
+const Spinner = CLI.Spinner;
 
 async function initProcess() {
   clear();
   console.log(
-    chalk.yellow(figlet.textSync('CI/CD', { horizontalLayout: 'full' }))
+    chalk.yellow(figlet.textSync('EDITOR', { horizontalLayout: 'full' }))
   );
   // Si falta algún path se obtienen
   if (!appPath || !zipPath) {
@@ -54,14 +58,19 @@ async function initProcess() {
     if (!validZipPath) {
       log(`Zip path inválido `, 'error');
     }
-    log(`Saliendo de aplicación por error `, 'error');
-    process.exit(0);
+    await exitApp(`Saliendo de aplicación por error `, 'error');
   }
   // Elige qué proceso(s) ejecutar
   const { cmd } = await processToExec();
   // Proceso build
   if (cmd === 'Build' || cmd === 'Todos') {
+    const status = new Spinner(
+      'Comenzando proceso build, por favor espera...',
+      ['◜', '◠', '◝', '◞', '◡', '◟']
+    );
+    status.start();
     const build = await buildProcess();
+    status.stop();
   }
   // Proceso zip
   if (cmd === 'Zip' || cmd === 'Todos') {
@@ -75,16 +84,21 @@ async function initProcess() {
     }
     const upload = await uploadProcess(versionToUpload);
   }
-  process.exit(0);
+  if (process.exitCode !== 1) {
+    await exitApp(`Saliendo de aplicación con éxito `, 'success');
+  }
+  process.exit();
 }
 
 // Proceso build
 async function buildProcess(): Promise<void> {
-  log('Comenzando proceso ng build.... ', 'info');
+  // log('Comenzando proceso ng build.... ', 'info');
   const build = await ngBuild(appPath);
   if (!build) {
-    log(`Saliendo de aplicación por error en build process `, 'error');
-    process.exit(0);
+    await exitApp(
+      `Saliendo de aplicación por error en build process `,
+      'error'
+    );
   }
 }
 // Proceso zip
@@ -92,8 +106,7 @@ async function zipProcess(): Promise<void> {
   // Comprobar que exista carpeta dist\banorte
   if (!directoryExists(`${appPath}\\dist\\banorte`)) {
     log('No se encontró la carpeta con la aplicación compilada ', 'error');
-    log(`Saliendo de aplicación por error en zip process `, 'error');
-    process.exit(0);
+    await exitApp(`Saliendo de aplicación por error en zip process `, 'error');
   }
   log('Comenzando proceso 7zip.... ', 'info');
   setVersion();
@@ -101,8 +114,7 @@ async function zipProcess(): Promise<void> {
   // Proceso zip
   const zip = await ngZip(appPath, zipPath, version);
   if (!zip) {
-    log(`Saliendo de aplicación por error en zip process `, 'error');
-    process.exit(0);
+    await exitApp(`Saliendo de aplicación por error en zip process `, 'error');
   }
 }
 // Proceso upload
@@ -117,21 +129,21 @@ async function uploadProcess(
   const validPath = verifyVersion(filePath);
   if (!validPath) {
     log(`No se encontró el archivo especificado ${savedVersion}.zip `, 'error');
-    log(`Saliendo de aplicación por error en upload process `, 'error');
-    process.exit(0);
+    await exitApp(
+      `Saliendo de aplicación por error en upload process `,
+      'error'
+    );
+    return;
   }
-  const uploadRes = await upload(filePath, env);
-  let filesystemsR: boolean;
-  let refreshR: boolean;
-  if (!!!uploadRes) {
-    log(`Saliendo de aplicación por error en upload process `, 'error');
-    process.exit(0);
-  }
-  filesystemsR = await filesystems(uploadRes, env);
-  refreshR = await refresh(env);
-  if (!filesystemsR || !refreshR) {
-    log(`Saliendo de aplicación por error en upload process `, 'error');
-    process.exit(0);
+  try {
+    const uploadRes = await upload(filePath, env);
+    await filesystems(uploadRes, env);
+    await refresh(env);
+  } catch (error) {
+    await exitApp(
+      `Saliendo de aplicación por error en upload process `,
+      'error'
+    );
   }
 }
 
