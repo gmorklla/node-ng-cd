@@ -65,8 +65,7 @@ async function initProcess() {
   // Proceso build
   if (cmd === 'Build' || cmd === 'Todos') {
     const status = new Spinner(
-      'Comenzando proceso build, por favor espera...',
-      ['◜', '◠', '◝', '◞', '◡', '◟']
+      'Comenzando proceso build, por favor espera...'
     );
     status.start();
     const build = await buildProcess();

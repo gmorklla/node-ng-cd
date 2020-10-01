@@ -92,7 +92,7 @@ function initProcess() {
                 case 8:
                     cmd = (_b.sent()).cmd;
                     if (!(cmd === 'Build' || cmd === 'Todos')) return [3 /*break*/, 10];
-                    status_1 = new Spinner('Comenzando proceso build, por favor espera...', ['◜', '◠', '◝', '◞', '◡', '◟']);
+                    status_1 = new Spinner('Comenzando proceso build, por favor espera...');
                     status_1.start();
                     return [4 /*yield*/, buildProcess()];
                 case 9:

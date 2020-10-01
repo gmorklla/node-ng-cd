@@ -8,7 +8,8 @@
     "dev": "tsnd --respawn app/index.ts",
     "prod": "tsc && node build/index.js",
     "tsc": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc && pkg ."
   },
   "author": "Alejandro RV",
   "license": "ISC",
