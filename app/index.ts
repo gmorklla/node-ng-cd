@@ -59,21 +59,26 @@ async function initProcess() {
       log(`Zip path inválido `, 'error');
     }
     await exitApp(`Saliendo de aplicación por error `, 'error');
+    return;
   }
   // Elige qué proceso(s) ejecutar
   const { cmd } = await processToExec();
   // Proceso build
   if (cmd === 'Build' || cmd === 'Todos') {
-    const status = new Spinner(
-      'Comenzando proceso build, por favor espera...'
-    );
+    const status = new Spinner('Comenzando proceso build, por favor espera...');
     status.start();
     const build = await buildProcess();
     status.stop();
+    if (!build) {
+      return;
+    }
   }
   // Proceso zip
   if (cmd === 'Zip' || cmd === 'Todos') {
     const zip = await zipProcess();
+    if (!zip) {
+      return;
+    }
   }
   // Proceso upload
   if (cmd === 'Upload' || cmd === 'Todos') {
@@ -82,6 +87,9 @@ async function initProcess() {
       versionToUpload = await getVersionToUpload();
     }
     const upload = await uploadProcess(versionToUpload);
+    if (!upload) {
+      return;
+    }
   }
   if (process.exitCode !== 1) {
     await exitApp(`Saliendo de aplicación con éxito `, 'success');
@@ -90,7 +98,7 @@ async function initProcess() {
 }
 
 // Proceso build
-async function buildProcess(): Promise<void> {
+async function buildProcess(): Promise<boolean> {
   // log('Comenzando proceso ng build.... ', 'info');
   const build = await ngBuild(appPath);
   if (!build) {
@@ -99,13 +107,15 @@ async function buildProcess(): Promise<void> {
       'error'
     );
   }
+  return build;
 }
 // Proceso zip
-async function zipProcess(): Promise<void> {
+async function zipProcess(): Promise<boolean> {
   // Comprobar que exista carpeta dist\banorte
   if (!directoryExists(`${appPath}\\dist\\banorte`)) {
     log('No se encontró la carpeta con la aplicación compilada ', 'error');
     await exitApp(`Saliendo de aplicación por error en zip process `, 'error');
+    return false;
   }
   log('Comenzando proceso 7zip.... ', 'info');
   setVersion();
@@ -115,11 +125,12 @@ async function zipProcess(): Promise<void> {
   if (!zip) {
     await exitApp(`Saliendo de aplicación por error en zip process `, 'error');
   }
+  return zip;
 }
 // Proceso upload
 async function uploadProcess(
   savedVersion: string | null = null
-): Promise<void> {
+): Promise<boolean> {
   log('Comenzando proceso upload de aplicación... ', 'info');
   const { env } = await getEnvironment();
   const filePath = !!savedVersion
@@ -132,17 +143,19 @@ async function uploadProcess(
       `Saliendo de aplicación por error en upload process `,
       'error'
     );
-    return;
+    return false;
   }
   try {
     const uploadRes = await upload(filePath, env);
     await filesystems(uploadRes, env);
     await refresh(env);
+    return true;
   } catch (error) {
     await exitApp(
       `Saliendo de aplicación por error en upload process `,
       'error'
     );
+    return false;
   }
 }
 

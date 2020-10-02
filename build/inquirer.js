@@ -7,7 +7,7 @@ function getPaths() {
         {
             name: 'app',
             type: 'input',
-            message: 'Ruta en donde se encuentra la aplicación:',
+            message: 'Ruta absoluta de la aplicación angular (uf-ui-managment):',
             validate: function (value) {
                 if (value.length) {
                     return true;
@@ -20,7 +20,7 @@ function getPaths() {
         {
             name: 'zip',
             type: 'input',
-            message: 'Ruta en donde se colocará el zip con la aplicación:',
+            message: 'Ruta absoluta en donde se colocará el zip con la aplicación compilada:',
             validate: function (value) {
                 if (value.length) {
                     return true;

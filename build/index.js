@@ -87,7 +87,7 @@ function initProcess() {
                     return [4 /*yield*/, utilities_1.exitApp("Saliendo de aplicaci\u00F3n por error ", 'error')];
                 case 6:
                     _b.sent();
-                    _b.label = 7;
+                    return [2 /*return*/];
                 case 7: return [4 /*yield*/, inquirer_1.processToExec()];
                 case 8:
                     cmd = (_b.sent()).cmd;
@@ -98,12 +98,18 @@ function initProcess() {
                 case 9:
                     build = _b.sent();
                     status_1.stop();
+                    if (!build) {
+                        return [2 /*return*/];
+                    }
                     _b.label = 10;
                 case 10:
                     if (!(cmd === 'Zip' || cmd === 'Todos')) return [3 /*break*/, 12];
                     return [4 /*yield*/, zipProcess()];
                 case 11:
                     zip = _b.sent();
+                    if (!zip) {
+                        return [2 /*return*/];
+                    }
                     _b.label = 12;
                 case 12:
                     if (!(cmd === 'Upload' || cmd === 'Todos')) return [3 /*break*/, 16];
@@ -116,6 +122,9 @@ function initProcess() {
                 case 14: return [4 /*yield*/, uploadProcess(versionToUpload)];
                 case 15:
                     upload_1 = _b.sent();
+                    if (!upload_1) {
+                        return [2 /*return*/];
+                    }
                     _b.label = 16;
                 case 16:
                     if (!(process.exitCode !== 1)) return [3 /*break*/, 18];
@@ -144,7 +153,7 @@ function buildProcess() {
                 case 2:
                     _a.sent();
                     _a.label = 3;
-                case 3: return [2 /*return*/];
+                case 3: return [2 /*return*/, build];
             }
         });
     });
@@ -161,7 +170,7 @@ function zipProcess() {
                     return [4 /*yield*/, utilities_1.exitApp("Saliendo de aplicaci\u00F3n por error en zip process ", 'error')];
                 case 1:
                     _a.sent();
-                    _a.label = 2;
+                    return [2 /*return*/, false];
                 case 2:
                     log_1.log('Comenzando proceso 7zip.... ', 'info');
                     utilities_1.setVersion();
@@ -174,7 +183,7 @@ function zipProcess() {
                 case 4:
                     _a.sent();
                     _a.label = 5;
-                case 5: return [2 /*return*/];
+                case 5: return [2 /*return*/, zip];
             }
         });
     });
@@ -200,7 +209,7 @@ function uploadProcess(savedVersion) {
                     return [4 /*yield*/, utilities_1.exitApp("Saliendo de aplicaci\u00F3n por error en upload process ", 'error')];
                 case 2:
                     _a.sent();
-                    return [2 /*return*/];
+                    return [2 /*return*/, false];
                 case 3:
                     _a.trys.push([3, 7, , 9]);
                     return [4 /*yield*/, requests_1.upload(filePath, env)];
@@ -212,13 +221,13 @@ function uploadProcess(savedVersion) {
                     return [4 /*yield*/, requests_1.refresh(env)];
                 case 6:
                     _a.sent();
-                    return [3 /*break*/, 9];
+                    return [2 /*return*/, true];
                 case 7:
                     error_1 = _a.sent();
                     return [4 /*yield*/, utilities_1.exitApp("Saliendo de aplicaci\u00F3n por error en upload process ", 'error')];
                 case 8:
                     _a.sent();
-                    return [3 /*break*/, 9];
+                    return [2 /*return*/, false];
                 case 9: return [2 /*return*/];
             }
         });
