@@ -23,7 +23,7 @@
     "figlet": "^1.5.0",
     "form-data": "^3.0.0",
     "inquirer": "^7.3.3",
-    "moment": "^2.27.0",
+    "moment": "^2.29.2",
     "node-7z": "^2.1.1",
     "nodemon": "^2.0.4",
     "typescript": "^3.9.6",
